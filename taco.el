@@ -112,7 +112,34 @@ for MS shells."
     (shell-quote-argument argument)))
 
 
-;; Taco compilation commands
+;; User-facing Taco functions/commands
+
+;;;###autoload
+(defun taco-get-builddir (&optional srcdir builddir-name)
+  (let* ((srcdir (or srcdir default-directory))
+         (builddir-name (or builddir-name taco-builddir-name))
+         (builddir srcdir)
+         (next-step))
+    (cl-loop
+     (pcase-let ((`(,tool ,project-file ,guessed-tool)
+                  (apply #'taco--find-tool builddir next-step)))
+       (unless tool (cl-return))
+       ;; Get the next step information; if it's a build step, then set the
+       ;; builddir up. This covers the usual configure-then-build process where
+       ;; the actual build files end up in a builddir.
+       (setq next-step (cdr (assq 'next-step (cdr tool))))
+       (when (eq (car next-step) 'build)
+         (setq builddir (expand-file-name (file-name-as-directory builddir-name)
+                                          srcdir))
+         (cl-return))
+       ;; If there's no next step, we're done.
+       (unless next-step (cl-return))))
+    builddir))
+
+;;;###autoload
+(defun taco-project-get-builddir (&optional project builddir-name)
+  (let ((project (or project (project-current))))
+    (when project (taco-get-builddir (project-root project) builddir-name))))
 
 ;;;###autoload
 (defun taco-compile-command (builddir-name one-step &optional srcdir)
@@ -165,19 +192,34 @@ for MS shells."
        (unless next-step (cl-return))))
     (mapconcat #'identity (reverse commands) " && ")))
 
+(defun taco--compile (directory &optional builddir-name one-step interactive)
+  (let* ((default-directory directory)
+         (compile-command (taco-compile-command builddir-name one-step)))
+    (if interactive
+        (call-interactively #'compile)
+      (compile compile-command))))
+
+(defun taco--read-build-directory (arg)
+  (if arg
+      (read-directory-name "Build directory name: "
+                           (expand-file-name taco-builddir-name))
+    taco-builddir-name))
+
 ;;;###autoload
 (defun taco-compile (directory &optional builddir-name)
   (interactive
+   (list default-directory
+         (taco--read-build-directory current-prefix-arg)))
+  (taco--compile directory builddir-name taco-one-step
+                 (called-interactively-p 'any)))
+
+;;;###autoload
+(defun taco-project-compile (directory &optional builddir-name)
+  (interactive
    (list (project-root (project-current t))
-         (if current-prefix-arg
-             (read-directory-name "Build directory name: "
-                                  (expand-file-name taco-builddir-name))
-             taco-builddir-name)))
-  (let* ((default-directory directory)
-         (compile-command (taco-compile-command builddir-name taco-one-step)))
-    (if (called-interactively-p 'any)
-        (call-interactively #'compile)
-      (compile compile-command))))
+         (taco--read-build-directory current-prefix-arg)))
+  (taco--compile directory builddir-name taco-one-step
+                 (called-interactively-p 'any)))
 
 (provide 'taco)
 ;;; taco.el ends here
