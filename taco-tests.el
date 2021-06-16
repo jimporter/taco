@@ -27,6 +27,7 @@
 (require 'ert)
 
 (defmacro with-fake-files (files &rest body)
+  "Pretend FILES exist within BODY."
   (declare (indent 1))
   `(let* ((files ,files)
           (project-directory "/path/to/project/")
@@ -37,10 +38,11 @@
        ,@body)))
 
 (defmacro with-fake-project (project &rest body)
+  "Pretend the active project is PROJECT within BODY."
   (declare (indent 1))
   `(let ((project ,project))
      (cl-letf (((symbol-function #'project-current)
-                (lambda (&optional maybe-prompt directory)
+                (lambda (&optional maybe-prompt _directory)
                   (or project (when maybe-prompt '(transient . ""))))))
        ,@body)))
 
@@ -241,3 +243,5 @@
                      (format "9k %s" escaped-builddir)))
       (should (equal (taco-get-builddir nil builddir)
                      "/ssh:host:/path/to/build/")))))
+
+;;; taco-tests.el ends here
