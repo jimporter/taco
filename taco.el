@@ -120,15 +120,12 @@ for MS shells."
     (defsubst taco--project-root (project) (car (project-roots project)))))
 
 ;;;###autoload
-(defun taco-get-builddir (&optional srcdir builddir-name)
+(defun taco-get-builddir (srcdir &optional builddir-name)
   "Get the build directory associated with SRCDIR.
-If SRCDIR is nil, get the build directory for `default-directory'.
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
 value specified in `taco-builddir-name'."
-  (let* ((srcdir (if srcdir
-                     (file-name-as-directory (expand-file-name srcdir))
-                   default-directory))
+  (let* ((srcdir (file-name-as-directory (expand-file-name srcdir)))
          (builddir-name (or builddir-name taco-builddir-name))
          (builddir srcdir)
          (next-step))
@@ -149,24 +146,19 @@ value specified in `taco-builddir-name'."
     builddir))
 
 ;;;###autoload
-(defun taco-project-get-builddir (&optional project builddir-name)
+(defun taco-project-get-builddir (project &optional builddir-name)
   "Get the build directory associated with PROJECT.
-If PROJECT is nil, use the current project.  BUILDDIR-NAME, if
-non-nil, represents the path fragment to append to the source
-directory to make the build dir.  If nil, use the default value
-specified in `taco-builddir-name'."
-  (let ((project (or project (project-current))))
-    (when project (taco-get-builddir (taco--project-root project)
-                                     builddir-name))))
+BUILDDIR-NAME, if non-nil, represents the path fragment to append to
+the source directory to make the build dir.  If nil, use the default
+value specified in `taco-builddir-name'."
+  (taco-get-builddir (taco--project-root project) builddir-name))
 
 ;;;###autoload
-(cl-defun taco-compile-command (builddir-name &key one-step trailing-space
-                                              (srcdir default-directory))
+(cl-defun taco-compile-command (srcdir builddir-name &key one-step
+                                       trailing-space)
   "Return the default compile command for the code in SRCDIR.
-This generates a default command based on the build files in SRCIDR
-\(or `default-directory' if SRCDIR is nil).  BUILDDIR-NAME represents
-the path fragment to append to the source directory to make the build
-dir.
+BUILDDIR-NAME represents the path fragment to append to the source
+directory to make the build dir.
 
 ONE-STEP, if non-nil, results in only a single command being returned;
 otherwise, all (known) commands to build the code will be returned.
@@ -174,10 +166,11 @@ otherwise, all (known) commands to build the code will be returned.
 TRAILING-SPACE, if non-nil, appends an extra space character to the
 end of the command in order to make it easier to add additional
 arguments."
-  (let ((builddir srcdir)
-        (cwd srcdir)
-        (next-step)
-        (commands))
+  (let* ((srcdir (file-name-as-directory (expand-file-name srcdir)))
+         (builddir srcdir)
+         (cwd srcdir)
+         (next-step)
+         (commands))
     (cl-loop
      (pcase-let ((`(,tool ,project-file ,guessed-tool)
                   (apply #'taco--find-tool builddir next-step)))
@@ -233,7 +226,7 @@ otherwise, all (known) commands to build the code will be returned.
 
 If INTERACTIVE is non-nil, call `compile' interactively."
   (let* ((default-directory directory)
-         (compile-command (taco-compile-command builddir-name
+         (compile-command (taco-compile-command directory builddir-name
                            :one-step one-step :trailing-space interactive)))
     (if interactive
         (call-interactively #'compile)
@@ -249,7 +242,7 @@ the default value in `taco-builddir-name'."
     taco-builddir-name))
 
 ;;;###autoload
-(defun taco-compile (&optional directory builddir-name)
+(defun taco-compile (directory &optional builddir-name)
   "Compile the code in DIRECTORY using the default command.
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
@@ -257,12 +250,11 @@ value specified in `taco-builddir-name'."
   (interactive
    (list default-directory
          (taco--read-build-directory current-prefix-arg)))
-  (taco--compile (or directory default-directory)
-                 (or builddir-name taco-builddir-name) taco-one-step
+  (taco--compile directory (or builddir-name taco-builddir-name) taco-one-step
                  (called-interactively-p 'any)))
 
 ;;;###autoload
-(defun taco-project-compile (&optional project builddir-name)
+(defun taco-project-compile (project &optional builddir-name)
   "Compile the code in PROJECT using the default command.
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
@@ -270,9 +262,8 @@ value specified in `taco-builddir-name'."
   (interactive
    (list (project-current t)
          (taco--read-build-directory current-prefix-arg)))
-  (let ((directory (taco--project-root (or project (project-current)))))
-    (taco--compile (expand-file-name directory)
-                   (or builddir-name taco-builddir-name) taco-one-step
+  (let ((directory (expand-file-name (taco--project-root project))))
+    (taco--compile directory (or builddir-name taco-builddir-name) taco-one-step
                    (called-interactively-p 'any))))
 
 (provide 'taco)
