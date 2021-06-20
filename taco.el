@@ -242,29 +242,33 @@ the default value in `taco-builddir-name'."
     taco-builddir-name))
 
 ;;;###autoload
-(defun taco-compile (directory &optional builddir-name)
+(defun taco-compile (directory &optional builddir-name interactive)
   "Compile the code in DIRECTORY using the default command.
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
-value specified in `taco-builddir-name'."
+value specified in `taco-builddir-name'.  INTERACTIVE, if non-nil,
+specifies that `compile' should be called interactively."
   (interactive
    (list default-directory
-         (taco--read-build-directory current-prefix-arg)))
+         (taco--read-build-directory current-prefix-arg)
+         t))
   (taco--compile directory (or builddir-name taco-builddir-name) taco-one-step
-                 (called-interactively-p 'any)))
+                 interactive))
 
 ;;;###autoload
-(defun taco-project-compile (project &optional builddir-name)
+(defun taco-project-compile (project &optional builddir-name interactive)
   "Compile the code in PROJECT using the default command.
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
-value specified in `taco-builddir-name'."
+value specified in `taco-builddir-name'.  INTERACTIVE, if non-nil,
+specifies that `compile' should be called interactively."
   (interactive
    (list (project-current t)
-         (taco--read-build-directory current-prefix-arg)))
+         (taco--read-build-directory current-prefix-arg)
+         t))
   (let ((directory (expand-file-name (taco--project-root project))))
     (taco--compile directory (or builddir-name taco-builddir-name) taco-one-step
-                   (called-interactively-p 'any))))
+                   interactive)))
 
 (provide 'taco)
 ;;; taco.el ends here
