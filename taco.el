@@ -51,39 +51,39 @@
 
 (defvar taco-tools
   '((ninja
-     (build-step build)
-     (project-file "build.ninja")
+     (build-step . build)
+     (project-file . "build.ninja")
      (working-directory builddir)
-     (command ("ninja")))
+     (command "ninja"))
     (make
-     (build-step build)
-     (project-file "Makefile")
+     (build-step . build)
+     (project-file . "Makefile")
      (working-directory builddir)
-     (command ("make")))
+     (command "make"))
     (bfg9000
-     (build-step configure)
-     (project-file "build.bfg")
+     (build-step . configure)
+     (project-file . "build.bfg")
      (working-directory srcdir)
-     (command ("9k" builddir))
+     (command "9k" builddir)
      (next-step build ninja))
     (configure
-     (build-step configure)
-     (project-file "configure")
+     (build-step . configure)
+     (project-file . "configure")
      (working-directory builddir t)
-     (command (project-file))
+     (command project-file)
      (next-step build make))
     (automake
-     (build-step preconfigure)
-     (project-file "configure.ac")
+     (build-step . preconfigure)
+     (project-file . "configure.ac")
      (working-directory srcdir)
-     (command ("autoreconf"))
+     (command "autoreconf")
      (next-step configure configure)))
   "An alist of known tools to use when compiling projects.")
 
 ;; XXX: It would be nice to let a tool have multiple project files.
 (defun taco--project-file (tool directory)
   "Get the path to the project file for TOOL in DIRECTORY."
-  (let ((project-file (cadr (assq 'project-file (cdr tool)))))
+  (let ((project-file (alist-get 'project-file (cdr tool))))
     (expand-file-name project-file directory)))
 
 (defun taco--find-tool (directory &optional step guess)
@@ -91,7 +91,7 @@
 If the tool's project file is found in DIRECTORY, return that tool.
 Otherwise, if GUESS is non-nil, use that as the tool's key."
   (or (cl-dolist (tool taco-tools)
-        (let* ((build-step (cadr (assq 'build-step (cdr tool))))
+        (let* ((build-step (alist-get 'build-step (cdr tool)))
                (project-file (taco--project-file tool directory)))
           (when (and (or (not step) (eq step build-step))
                      (file-exists-p project-file))
@@ -136,7 +136,7 @@ value specified in `taco-builddir-name'."
        ;; Get the next step information; if it's a build step, then set the
        ;; builddir up.  This covers the usual configure-then-build process where
        ;; the actual build files end up in a builddir.
-       (setq next-step (cdr (assq 'next-step (cdr tool))))
+       (setq next-step (alist-get 'next-step (cdr tool)))
        (when (eq (car next-step) 'build)
          (setq builddir (expand-file-name (file-name-as-directory builddir-name)
                                           srcdir))
@@ -185,17 +185,17 @@ arguments."
        ;; Get the next step information; if it's a build step, then set the
        ;; builddir up.  This covers the usual configure-then-build process where
        ;; the actual build files end up in a builddir.
-       (setq next-step (cdr (assq 'next-step (cdr tool))))
+       (setq next-step (alist-get 'next-step (cdr tool)))
        (when (eq (car next-step) 'build)
          (setq builddir (expand-file-name (file-name-as-directory builddir-name)
                                           srcdir)))
        ;; Generate the commands to be executed for this step.
-       (pcase-let* ((next-dir (cdr (assq 'working-directory (cdr tool))))
+       (pcase-let* ((next-dir (alist-get 'working-directory (cdr tool)))
                     (`(,next-dir ,make-next-dir) next-dir)
                     (next-dir (pcase next-dir
                                 ('srcdir srcdir)
                                 ('builddir builddir)))
-                    (arguments (cadr (assq 'command (cdr tool)))))
+                    (arguments (alist-get 'command (cdr tool))))
          ;; Change directory if necessary.
          (unless (string= cwd next-dir)
            (let ((directory (taco--maybe-shell-quote-argument
