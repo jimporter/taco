@@ -66,6 +66,12 @@
      (working-directory srcdir)
      (command "9k" builddir)
      (next-step build ninja))
+    (cmake
+     (build-step . configure)
+     (project-file . "CMakeLists.txt")
+     (working-directory srcdir)
+     (command "cmake" "-G" "Unix Makefiles" builddir)
+     (next-step build make))
     (configure
      (build-step . configure)
      (project-file . "configure")
