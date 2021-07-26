@@ -219,8 +219,10 @@ arguments."
                commands))
        ;; If there's no next step, we're done.
        (unless next-step (cl-return))))
-    (concat (mapconcat #'identity (reverse commands) " && ")
-            (when trailing-space " "))))
+    (let ((command (mapconcat #'identity (reverse commands) " && ")))
+      (concat command (when (and trailing-space
+                                 (not (string= command "")))
+                        " ")))))
 
 (defun taco--compile (directory builddir-name one-step interactive)
   "Invoke `compile' in DIRECTORY with the default commands.

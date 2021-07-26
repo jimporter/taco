@@ -136,7 +136,12 @@
       (should (equal (taco-compile-command "/path/to/project/" "build")
                      "9k build/ && cd build/ && ninja"))
       (should (equal (taco-compile-command "../project" "build")
-                     "9k build/ && cd build/ && ninja")))))
+                     "9k build/ && cd build/ && ninja"))))
+  (with-fake-files nil
+    (should (equal (taco-compile-command default-directory "build") ""))
+    (should (equal (taco-compile-command default-directory "build"
+                                         :trailing-space t)
+                   ""))))
 
 (ert-deftest taco-tests-compile ()
   (cl-letf (((symbol-function #'compile)
