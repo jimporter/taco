@@ -1,4 +1,4 @@
-;;; taco-tests.el --- Tests for urgrep -*- lexical-binding: t -*-
+;;; taco-tests.el --- Tests for taco -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021 Jim Porter
 
