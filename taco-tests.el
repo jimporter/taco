@@ -30,11 +30,11 @@
   "Pretend FILES exist within BODY."
   (declare (indent 1))
   `(let* ((files ,files)
-          (project-directory "/path/to/project/")
-          (default-directory project-directory))
+          (project-directory "/path/to/project/"))
      (cl-letf (((symbol-function #'file-exists-p)
                 (lambda (path)
-                  (member (file-relative-name path project-directory) files))))
+                  (member (file-relative-name path project-directory) files)))
+               (default-directory project-directory))
        ,@body)))
 
 (defmacro with-fake-project (project &rest body)
