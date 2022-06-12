@@ -245,7 +245,7 @@
     (should (equal (taco-compile-command "build" :one-step t) "make"))
     (should (equal (taco-get-builddir nil "build") "/path/to/project/"))))
 
-(ert-deftest taco-tests-make ()
+(ert-deftest taco-tests-ninja ()
   (with-fake-files '("build.ninja")
     (should (equal (taco-compile-command default-directory "build")
                    "ninja"))
