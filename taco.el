@@ -120,10 +120,11 @@ for MS shells."
 
 ;; User-facing Taco functions/commands
 
-(eval-when-compile
+;; `project-root' was added in project.el 0.3.0 (Emacs 28.1).
+(defalias 'taco--project-root
   (if (fboundp 'project-root)
-      (defsubst taco--project-root (project) (project-root project))
-    (defsubst taco--project-root (project) (car (project-roots project)))))
+      #'project-root
+    (lambda (project) (car (project-roots project)))))
 
 ;;;###autoload
 (defun taco-get-builddir (srcdir &optional builddir-name)
