@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'taco)
 
 (defmacro with-fake-files (files &rest body)
   "Pretend FILES exist within BODY."

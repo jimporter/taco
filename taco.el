@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jimporter/taco
 ;; Version: 0.1-git
 ;; Keywords:
-;; Package-Requires: ((emacs "27.1") (project "0.2.0"))
+;; Package-Requires: ((emacs "27.1") (project "0.3.0"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -111,6 +111,7 @@ Otherwise, if GUESS is non-nil, use that as the tool's key."
   "Quote ARGUMENT if needed for passing to an inferior shell.
 This works as `shell-quote-argument', but avoids quoting unnecessarily
 for MS shells."
+  (declare-function w32-shell-dos-semantics "w32-fns" nil)
   (if (and (or (eq system-type 'ms-dos)
                (and (eq system-type 'windows-nt) (w32-shell-dos-semantics)))
            (not (string-match "[^-0-9a-zA-Z_./=]" argument)))
@@ -119,12 +120,6 @@ for MS shells."
 
 
 ;; User-facing Taco functions/commands
-
-;; `project-root' was added in project.el 0.3.0 (Emacs 28.1).
-(defalias 'taco--project-root
-  (if (fboundp 'project-root)
-      #'project-root
-    (lambda (project) (car (project-roots project)))))
 
 ;;;###autoload
 (defun taco-get-builddir (srcdir &optional builddir-name)
@@ -158,7 +153,7 @@ value specified in `taco-builddir-name'."
 BUILDDIR-NAME, if non-nil, represents the path fragment to append to
 the source directory to make the build dir.  If nil, use the default
 value specified in `taco-builddir-name'."
-  (taco-get-builddir (taco--project-root project) builddir-name))
+  (taco-get-builddir (project-root project) builddir-name))
 
 ;;;###autoload
 (cl-defun taco-compile-command (srcdir builddir-name &key one-step
@@ -275,7 +270,7 @@ specifies that `compile' should be called interactively."
    (list (project-current t)
          (taco--read-build-directory current-prefix-arg)
          t))
-  (let ((directory (expand-file-name (taco--project-root project))))
+  (let ((directory (expand-file-name (project-root project))))
     (taco--compile directory (or builddir-name taco-builddir-name) taco-one-step
                    interactive)))
 
