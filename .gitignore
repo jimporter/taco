@@ -1,2 +1,3 @@
 /.deps
 *.elc
+taco-autoloads.el
