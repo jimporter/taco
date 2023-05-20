@@ -3,7 +3,10 @@
 ;; Copyright (C) 2021-2023 Jim Porter
 
 ;; Author: Jim Porter
+;; URL: https://github.com/jimporter/taco
 ;; Keywords: tests
+
+;; This file is NOT part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
