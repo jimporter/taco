@@ -1,3 +1,4 @@
-/.deps
 *.elc
-taco-autoloads.el
+/.deps
+/taco-autoloads.el
+/taco-pkg.el
