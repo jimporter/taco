@@ -1,6 +1,6 @@
 ;;; taco.el --- Tool-aware compilation commands -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2024 Jim Porter
+;; Copyright (C) 2021-2025 Jim Porter
 
 ;; Author: Jim Porter
 ;; URL: https://github.com/jimporter/taco
