@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021-2026 Jim Porter
 
 ;; Author: Jim Porter
-;; URL: https://github.com/jimporter/taco
+;; URL: https://sr.ht/~jimporter/taco/
 ;; Keywords: tests
 
 ;; This file is NOT part of GNU Emacs.

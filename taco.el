@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021-2026 Jim Porter
 
 ;; Author: Jim Porter
-;; URL: https://github.com/jimporter/taco
+;; URL: https://sr.ht/~jimporter/taco/
 ;; Version: 0.1-git
 ;; Keywords: compile, build
 ;; Package-Requires: ((emacs "27.1") (project "0.3.0"))
