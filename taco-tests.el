@@ -1,6 +1,6 @@
 ;;; taco-tests.el --- Tests for taco -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2025 Jim Porter
+;; Copyright (C) 2021-2026 Jim Porter
 
 ;; Author: Jim Porter
 ;; URL: https://github.com/jimporter/taco
