@@ -198,18 +198,19 @@
 (ert-deftest taco-tests-cmake-fresh ()
   (with-fake-files '("CMakeLists.txt")
     (should (equal (taco-compile-command default-directory "build")
-                   "cmake -G Unix\\ Makefiles build/ && cd build/ && make"))
+                   (concat "cmake -G Unix\\ Makefiles build/ "
+                           "&& cd build/ && cmake --build ./ --parallel")))
     (should (equal (taco-compile-command default-directory "build" :one-step t)
                    "cmake -G Unix\\ Makefiles build/"))
     (should (equal (taco-get-builddir default-directory "build")
                    "/path/to/project/build/"))))
 
 (ert-deftest taco-tests-cmake-rebuild ()
-  (with-fake-files '("CMakeLists.txt" "build/Makefile")
+  (with-fake-files '("CMakeLists.txt" "build/CMakeCache.txt")
     (should (equal (taco-compile-command default-directory "build")
-                   "cd build/ && make"))
+                   "cd build/ && cmake --build ./ --parallel"))
     (should (equal (taco-compile-command default-directory "build" :one-step t)
-                   "cd build/ && make"))
+                   "cd build/ && cmake --build ./ --parallel"))
     (should (equal (taco-get-builddir default-directory "build")
                    "/path/to/project/build/"))))
 

@@ -52,7 +52,12 @@
 ;; Taco tools
 
 (defvar taco-tools
-  '((ninja
+  '((cmake-build
+     (build-step . build)
+     (project-file . "CMakeCache.txt")
+     (working-directory builddir)
+     (command "cmake" "--build" builddir "--parallel"))
+    (ninja
      (build-step . build)
      (project-file . "build.ninja")
      (working-directory builddir)
@@ -73,7 +78,7 @@
      (project-file . "CMakeLists.txt")
      (working-directory srcdir)
      (command "cmake" "-G" "Unix Makefiles" builddir)
-     (next-step build make))
+     (next-step build cmake-build))
     (configure
      (build-step . configure)
      (project-file . "configure")
