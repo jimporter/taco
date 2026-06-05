@@ -104,10 +104,9 @@ Otherwise, if GUESS is non-nil, use that as the tool's key."
           (when (and (or (not step) (eq step build-step))
                      (file-exists-p project-file))
             (cl-return (list tool project-file nil)))))
-      (if-let* ((guess)
-                (tool (assq guess taco-tools))
-                (project-file (taco--project-file tool directory)))
-        (list tool project-file t))))
+      (when-let* ((guess)
+                  (tool (assq guess taco-tools)))
+        (list tool (taco--project-file tool directory) t))))
 
 (defun taco--maybe-shell-quote-argument (argument)
   "Quote ARGUMENT if needed for passing to an inferior shell.
