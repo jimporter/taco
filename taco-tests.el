@@ -30,16 +30,20 @@
 (require 'ert)
 (require 'taco)
 
+(defvar comp-warn-primitives)
+
 (defmacro with-fake-files (files &rest body)
   "Pretend FILES exist within BODY."
   (declare (indent 1))
-  `(let* ((files ,files)
-          (project-directory "/path/to/project/"))
-     (cl-letf (((symbol-function #'file-exists-p)
-                (lambda (path)
-                  (member (file-relative-name path project-directory) files)))
-               (default-directory project-directory))
-       ,@body)))
+  `(cl-letf* ((files ,files)
+              (project-directory "/path/to/project/")
+              (comp-warn-primitives
+               (remove 'file-exists-p (bound-and-true-p comp-warn-primitives)))
+              ((symbol-function #'file-exists-p)
+               (lambda (path)
+                 (member (file-relative-name path project-directory) files)))
+              (default-directory project-directory))
+       ,@body))
 
 (defmacro with-fake-project (project &rest body)
   "Pretend the active project is PROJECT within BODY."
