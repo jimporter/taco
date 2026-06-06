@@ -218,6 +218,13 @@
     (should (equal (taco-get-builddir default-directory "build")
                    "/path/to/project/build/"))))
 
+(ert-deftest taco-tests-cmake-prefer-cmake-build ()
+  (with-fake-files '("CMakeLists.txt" "build/Makefile" "build/CMakeCache.txt")
+    (should (equal (taco-compile-command default-directory "build")
+                   "cd build/ && cmake --build ./ --parallel"))
+    (should (equal (taco-compile-command default-directory "build" :one-step t)
+                   "cd build/ && cmake --build ./ --parallel"))))
+
 (ert-deftest taco-tests-autotools-fresh ()
   (with-fake-files '("configure")
     (should (equal (taco-compile-command default-directory "build")

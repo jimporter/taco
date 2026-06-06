@@ -52,12 +52,7 @@
 ;; Taco tools
 
 (defvar taco-tools
-  '((cmake-build
-     (build-step . build)
-     (project-file . "CMakeCache.txt")
-     (working-directory builddir)
-     (command "cmake" "--build" builddir "--parallel"))
-    (ninja
+  '((ninja
      (build-step . build)
      (project-file . "build.ninja")
      (working-directory builddir)
@@ -67,6 +62,11 @@
      (project-file . "Makefile")
      (working-directory builddir)
      (command "make"))
+    (cmake-build
+     (build-step . build)
+     (project-file . "CMakeCache.txt")
+     (working-directory builddir)
+     (command "cmake" "--build" builddir "--parallel"))
     (bfg9000
      (build-step . configure)
      (project-file . "build.bfg")
@@ -101,17 +101,25 @@
 
 (defun taco--find-tool (directory &optional step guess)
   "Find the best compilation tool in DIRECTORY for STEP.
-If the tool's project file is found in DIRECTORY, return that tool.
-Otherwise, if GUESS is non-nil, use that as the tool's key."
-  (or (cl-dolist (tool taco-tools)
+If GUESS is the key for a tool (see `taco-tools'), return that tool if
+its project file exists in DIRECTORY.  Otherwise, check the list of all
+tools and return the tool whose project file is found in DIRECTORY; if
+no such tool exists and GUESS is non-nil, return that tool."
+  (catch 'found
+    (let (guessed-tool guessed-project-file)
+      (when guess
+        (setq guessed-tool (assq guess taco-tools)
+              guessed-project-file (taco--project-file guessed-tool directory))
+        (when (file-exists-p guessed-project-file)
+          (throw 'found (list guessed-tool guessed-project-file nil))))
+      (dolist (tool taco-tools)
         (let* ((build-step (alist-get 'build-step (cdr tool)))
                (project-file (taco--project-file tool directory)))
           (when (and (or (not step) (eq step build-step))
                      (file-exists-p project-file))
-            (cl-return (list tool project-file nil)))))
-      (when-let* ((guess)
-                  (tool (assq guess taco-tools)))
-        (list tool (taco--project-file tool directory) t))))
+            (throw 'found (list tool project-file nil)))))
+      (when guess
+        (throw 'found (list guessed-tool guessed-project-file t))))))
 
 (defun taco--maybe-shell-quote-argument (argument)
   "Quote ARGUMENT if needed for passing to an inferior shell.
