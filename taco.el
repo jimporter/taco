@@ -6,7 +6,7 @@
 ;; URL: https://sr.ht/~jimporter/taco/
 ;; Version: 0.1-git
 ;; Keywords: compile, build
-;; Package-Requires: ((emacs "27.1") (project "0.3.0"))
+;; Package-Requires: ((emacs "29.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -47,6 +47,65 @@
 (defcustom taco-one-step nil
   "If non-nil, only provide a default command for a single step at a time."
   :type 'boolean)
+;;;###autoload (put 'taco-one-step 'safe-local-variable #'booleanp)
+
+(defcustom taco-num-jobs 'num-processors
+  "The number of parallel jobs to use during build steps.
+This can be a number, the variable `num-processors' or an expression
+using any of the functions `+', `-', `*', `/'."
+  :type '(restricted-sexp :match-alternatives (taco--safe-expr-p)))
+;;;###autoload (put 'taco-num-jobs 'safe-local-variable #'taco--safe-expr-p)
+
+
+;; Taco utility functions
+
+(defconst taco--safe-functions '(+ - * /))
+(defconst taco--safe-variables '(num-processors))
+
+;;;###autoload
+(defun taco--safe-expr-p (expr)
+  "Return non-nil if EXPR is safe to evaluate.
+A safe expression is one containing only numbers, the variable
+`num-processors', and the functions `+', `-', `*', `/'."
+  (or (numberp expr)
+      (memq expr taco--safe-variables)
+      (and (listp expr)
+           (memq (car expr) taco--safe-functions)
+           (seq-every-p #'taco--safe-expr-p (cdr expr)))))
+
+(defvar taco--num-processors (num-processors))
+
+(connection-local-set-profile-variables
+ 'taco-connection-local-profile
+ '((taco--num-processors . nil)))
+
+(connection-local-set-profiles
+ '(:application taco)
+ 'taco-connection-local-profile)
+
+(defun taco-num-processors ()
+  "Return the number of processors available.
+This is like `num-processors', but is connection-aware."
+  (with-connection-local-application-variables 'taco
+    (or taco--num-processors
+        (setq-connection-local
+         taco--num-processors
+         (with-temp-buffer
+           (process-file "nproc" nil t)
+           (string-to-number (buffer-string)))))))
+
+(defun taco-num-jobs ()
+  "Return the number of jobs to use for builds.
+This evaluates the variable `taco-num-jobs'."
+  (eval `(let ((num-processors (taco-num-processors)))
+           ,taco-num-jobs)
+        t))
+
+(defun taco--get-prop-pcase (prop tool value)
+  "Get the property PROP from TOOL and use it as a `pcase' macro for VALUE."
+  (when-let* ((cases (alist-get prop (cdr tool)))
+              (block (append `(,#'pcase ',value) cases)))
+    (eval block t)))
 
 
 ;; Taco tools
@@ -56,17 +115,20 @@
      (build-step . build)
      (project-file . "build.ninja")
      (working-directory builddir)
-     (command "ninja"))
+     (jobs-arguments (n (format "-j%d" n)))
+     (command "ninja" jobs))
     (make
      (build-step . build)
      (project-file . "Makefile")
      (working-directory builddir)
-     (command "make"))
+     (jobs-arguments (n (format "-j%d" n)))
+     (command "make" jobs))
     (cmake-build
      (build-step . build)
      (project-file . "CMakeCache.txt")
      (working-directory builddir)
-     (command "cmake" "--build" builddir "--parallel"))
+     (jobs-arguments (n (format "-j%d" n)))
+     (command "cmake" "--build" builddir jobs))
     (bfg9000
      (build-step . configure)
      (project-file . "build.bfg")
@@ -185,8 +247,7 @@ arguments."
   (let* ((srcdir (file-name-as-directory (expand-file-name srcdir)))
          (builddir srcdir)
          (cwd srcdir)
-         (next-step)
-         (commands))
+         next-step commands)
     (cl-loop
      (pcase-let ((`(,tool ,project-file ,guessed-tool)
                   (apply #'taco--find-tool builddir next-step)))
@@ -223,8 +284,11 @@ arguments."
          ;; Fill in command argument placeholders.
          (dolist (i `((project-file . ,(file-relative-name project-file cwd))
                       (srcdir       . ,(file-relative-name srcdir cwd))
-                      (builddir     . ,(file-relative-name builddir cwd))))
+                      (builddir     . ,(file-relative-name builddir cwd))
+                      (jobs         . ,(taco--get-prop-pcase
+                                        'jobs-arguments tool (taco-num-jobs)))))
            (setq arguments (cl-substitute (cdr i) (car i) arguments)))
+         (setq arguments (flatten-list arguments))
          (push (mapconcat #'taco--maybe-shell-quote-argument arguments " ")
                commands))
        ;; If there's no next step, we're done.
