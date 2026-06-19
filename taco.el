@@ -52,7 +52,8 @@
 (defcustom taco-num-jobs 'num-processors
   "The number of parallel jobs to use during build steps.
 This can be a number, the variable `num-processors' or an expression
-using any of the functions `+', `-', `*', `/'."
+using any of the functions `+', `-', `*', `/'.  If nil, don't set any
+parallel job options when calling build tools."
   :type '(restricted-sexp :match-alternatives (taco--safe-expr-p)))
 ;;;###autoload (put 'taco-num-jobs 'safe-local-variable #'taco--safe-expr-p)
 
@@ -110,24 +111,28 @@ This evaluates the variable `taco-num-jobs'."
 
 ;; Taco tools
 
+(defconst taco--jobs-arguments
+  '(('nil nil)
+    (n (format "-j%d" n))))
+
 (defvar taco-tools
-  '((ninja
+  `((ninja
      (build-step . build)
      (project-file . "build.ninja")
      (working-directory builddir)
-     (jobs-arguments (n (format "-j%d" n)))
+     (jobs-arguments . ,taco--jobs-arguments)
      (command "ninja" jobs))
     (make
      (build-step . build)
      (project-file . "Makefile")
      (working-directory builddir)
-     (jobs-arguments (n (format "-j%d" n)))
+     (jobs-arguments . ,taco--jobs-arguments)
      (command "make" jobs))
     (cmake-build
      (build-step . build)
      (project-file . "CMakeCache.txt")
      (working-directory builddir)
-     (jobs-arguments (n (format "-j%d" n)))
+     (jobs-arguments . ,taco--jobs-arguments)
      (command "cmake" "--build" builddir jobs))
     (bfg9000
      (build-step . configure)

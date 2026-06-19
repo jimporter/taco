@@ -283,6 +283,17 @@
       (should (equal (taco-get-builddir default-directory "build")
                      "/path/to/project/")))))
 
+(ert-deftest taco-tests-make-nil-jobs ()
+  (let ((taco-num-jobs nil))
+    (with-fake-files '("Makefile")
+      (should (equal (taco-compile-command default-directory "build")
+                     "make"))
+      (should (equal (taco-compile-command default-directory "build"
+                                           :one-step t)
+                     "make"))
+      (should (equal (taco-get-builddir default-directory "build")
+                     "/path/to/project/")))))
+
 (ert-deftest taco-tests-ninja ()
   (let ((taco-num-jobs 4))
     (with-fake-files '("build.ninja")
