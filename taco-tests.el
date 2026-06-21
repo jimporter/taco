@@ -210,11 +210,11 @@
   (let ((taco-num-jobs 4))
     (with-fake-files '("CMakeLists.txt")
       (should (equal (taco-compile-command default-directory "build")
-                     (concat "cmake -G Unix\\ Makefiles build/ "
-                             "&& cd build/ && cmake --build ./ -j4")))
+                     (concat "cmake build/ && cd build/ && "
+                             "cmake --build ./ -j4")))
       (should (equal (taco-compile-command default-directory "build"
                                            :one-step t)
-                     "cmake -G Unix\\ Makefiles build/"))
+                     "cmake build/"))
       (should (equal (taco-get-builddir default-directory "build")
                      "/path/to/project/build/")))))
 
