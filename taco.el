@@ -144,7 +144,7 @@ This evaluates the variable `taco-num-jobs'."
      (build-step . configure)
      (project-file . "CMakeLists.txt")
      (working-directory srcdir)
-     (command "cmake" "-G" "Unix Makefiles" builddir)
+     (command "cmake" builddir)
      (next-step build cmake-build))
     (configure
      (build-step . configure)
