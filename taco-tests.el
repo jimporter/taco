@@ -192,6 +192,11 @@
       (should (equal (taco-compile-command default-directory "build"
                                            :one-step t)
                      "9k build/"))
+      (let ((taco-extra-arguments-alist '((bfg9000 "--extra")
+                                          (ninja "--extra-build"))))
+        (should (equal (taco-compile-command default-directory "build")
+                       (concat "9k --extra build/ && cd build/ && "
+                               "ninja -j4 --extra-build"))))
       (should (equal (taco-get-builddir default-directory "build")
                      "/path/to/project/build/")))))
 
@@ -215,6 +220,11 @@
       (should (equal (taco-compile-command default-directory "build"
                                            :one-step t)
                      "cmake build/"))
+      (let ((taco-extra-arguments-alist '((cmake "--extra")
+                                          (cmake-build "--extra-build"))))
+        (should (equal (taco-compile-command default-directory "build")
+                       (concat "cmake --extra build/ && cd build/ && "
+                               "cmake --build ./ -j4 --extra-build"))))
       (should (equal (taco-get-builddir default-directory "build")
                      "/path/to/project/build/")))))
 
@@ -246,6 +256,12 @@
       (should (equal (taco-compile-command default-directory "build"
                                            :one-step t)
                      "mkdir build/ && cd build/ && ../configure"))
+      (let ((taco-extra-arguments-alist '((configure "--extra")
+                                          (make "--extra-build"))))
+        (should (equal (taco-compile-command default-directory "build")
+                       (concat "mkdir build/ && cd build/ && "
+                               "../configure --extra && "
+                               "make -j4 --extra-build"))))
       (should (equal (taco-get-builddir default-directory "build")
                      "/path/to/project/build/")))))
 

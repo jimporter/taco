@@ -57,6 +57,11 @@ parallel job options when calling build tools."
   :type '(restricted-sexp :match-alternatives (taco--safe-expr-p)))
 ;;;###autoload (put 'taco-num-jobs 'safe-local-variable #'taco--safe-expr-p)
 
+(defcustom taco-extra-arguments-alist nil
+  "An alist of extra arguments to pass to build tools.
+Each entry is of the form (TOOL-NAME ARG...)."
+  :type '(alist :key-type symbol :value-type (repeat string)))
+
 
 ;; Taco utility functions
 
@@ -121,42 +126,42 @@ This evaluates the variable `taco-num-jobs'."
      (project-file . "build.ninja")
      (working-directory builddir)
      (jobs-arguments . ,taco--jobs-arguments)
-     (command "ninja" jobs))
+     (command "ninja" jobs extra-arguments))
     (make
      (build-step . build)
      (project-file . "Makefile")
      (working-directory builddir)
      (jobs-arguments . ,taco--jobs-arguments)
-     (command "make" jobs))
+     (command "make" jobs extra-arguments))
     (cmake-build
      (build-step . build)
      (project-file . "CMakeCache.txt")
      (working-directory builddir)
      (jobs-arguments . ,taco--jobs-arguments)
-     (command "cmake" "--build" builddir jobs))
+     (command "cmake" "--build" builddir jobs extra-arguments))
     (bfg9000
      (build-step . configure)
      (project-file . "build.bfg")
      (working-directory srcdir)
-     (command "9k" builddir)
+     (command "9k" extra-arguments builddir)
      (next-step build ninja))
     (cmake
      (build-step . configure)
      (project-file . "CMakeLists.txt")
      (working-directory srcdir)
-     (command "cmake" builddir)
+     (command "cmake" extra-arguments builddir)
      (next-step build cmake-build))
     (configure
      (build-step . configure)
      (project-file . "configure")
      (working-directory builddir t)
-     (command project-file)
+     (command project-file extra-arguments)
      (next-step build make))
     (automake
      (build-step . preconfigure)
      (project-file . "configure.ac")
      (working-directory srcdir)
-     (command "autoreconf")
+     (command "autoreconf" extra-arguments)
      (next-step configure configure)))
   "An alist of known tools to use when compiling projects.")
 
@@ -291,7 +296,9 @@ arguments."
                       (srcdir       . ,(file-relative-name srcdir cwd))
                       (builddir     . ,(file-relative-name builddir cwd))
                       (jobs         . ,(taco--get-prop-pcase
-                                        'jobs-arguments tool (taco-num-jobs)))))
+                                        'jobs-arguments tool (taco-num-jobs)))
+                      (extra-arguments
+                       . ,(alist-get (car tool) taco-extra-arguments-alist))))
            (setq arguments (cl-substitute (cdr i) (car i) arguments)))
          (setq arguments (flatten-list arguments))
          (push (mapconcat #'taco--maybe-shell-quote-argument arguments " ")
